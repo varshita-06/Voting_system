@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Online Voting System</title>
+
+  <!-- CSS -->
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+      text-align: center;
+      margin-top: 40px;
+    }
+    .box {
+      background: white;
+      padding: 20px;
+      width: 300px;
+      margin: auto;
+      border-radius: 8px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 6px;
+      width: 90%;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+
+<body>
+
+<h2>🗳️ Online Voting System</h2>
+
+<!-- LOGIN -->
+<div id="login" class="box">
+  <h3>Login</h3>
+  <input id="loginUser" placeholder="Username">
+  <input id="loginPass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <p><a href="#" onclick="showRegister()">New user? Register</a></p>
+</div>
+
+<!-- REGISTER -->
+<div id="register" class="box hidden">
+  <h3>Register</h3>
+  <input id="regUser" placeholder="Username">
+  <input id="regPass" type="password" placeholder="Password">
+  <button onclick="register()">Register</button>
+  <p><a href="#" onclick="showLogin()">Back to Login</a></p>
+</div>
+
+<!-- VOTE -->
+<div id="vote" class="box hidden">
+  <h3>Cast Your Vote</h3>
+  <label><input type="radio" name="candidate" value="Candidate A"> Candidate A</label><br>
+  <label><input type="radio" name="candidate" value="Candidate B"> Candidate B</label><br>
+  <label><input type="radio" name="candidate" value="Candidate C"> Candidate C</label><br><br>
+  <button onclick="submitVote()">Submit Vote</button>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="box hidden">
+  <h3>Results</h3>
+  <div id="results"></div>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<!-- JavaScript -->
+  <script>
+  // Initialize storage safely
+  if (!localStorage.getItem("users")) {
+    localStorage.setItem("users", JSON.stringify([]));
+  }
+  if (!localStorage.getItem("votes")) {
+    localStorage.setItem("votes", JSON.stringify({
+      "Candidate A": 0,
+      "Candidate B": 0,
+      "Candidate C": 0
+    }));
+  }
+
+  let currentUser = "";
+
+  function hideAll() {
+    document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
+  }
+
+  function showLogin() {
+    hideAll();
+    document.getElementById("login").classList.remove("hidden");
+  }
+
+  function showRegister() {
+    hideAll();
+    document.getElementById("register").classList.remove("hidden");
+  }
+
+  function showVote() {
+    hideAll();
+    document.getElementById("vote").classList.remove("hidden");
+  }
+
+  function showResult() {
+    hideAll();
+    let votes = JSON.parse(localStorage.getItem("votes"));
+    let resultHTML = "";
+    for (let c in votes) {
+      resultHTML += `<p>${c}: ${votes[c]}</p>`;
+    }
+    document.getElementById("results").innerHTML = resultHTML;
+    document.getElementById("result").classList.remove("hidden");
+  }
+
+  function register() {
+    let u = regUser.value.trim();
+    let p = regPass.value.trim();
+
+    if (!u || !p) {
+      alert("All fields required");
+      return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("users"));
+
+    if (users.some(x => x.user === u)) {
+      alert("User already exists");
+      return;
+    }
+
+    users.push({ user: u, pass: p, voted: false });
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert("Registration successful");
+    regUser.value = regPass.value = "";
+    showLogin();
+  }
+
+  function login() {
+    let u = loginUser.value.trim();
+    let p = loginPass.value.trim();
+
+    let users = JSON.parse(localStorage.getItem("users"));
+    let user = users.find(x => x.user === u && x.pass === p);
+
+    if (!user) {
+      alert("Invalid credentials");
+      return;
+    }
+
+    currentUser = u;
+    user.voted ? showResult() : showVote();
+  }
+
+  function submitVote() {
+    let choice = document.querySelector("input[name='candidate']:checked");
+    if (!choice) {
+      alert("Select a candidate");
+      return;
+    }
+
+    let votes = JSON.parse(localStorage.getItem("votes"));
+    votes[choice.value]++;
+    localStorage.setItem("votes", JSON.stringify(votes));
+
+    let users = JSON.parse(localStorage.getItem("users"));
+    users.forEach(x => {
+      if (x.user === currentUser) x.voted = true;
+    });
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert("Vote submitted successfully");
+    showResult();
+  }
+
+  function logout() {
+    currentUser = "";
+    showLogin();
+  }
+
+  showLogin(); // default page
+
+</script>
+
+</body>
+</html>
